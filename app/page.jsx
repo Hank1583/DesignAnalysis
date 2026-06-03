@@ -32,6 +32,7 @@ export default function HomePage() {
   const [cloudLoading, setCloudLoading] = useState(false);
   const [cloudError, setCloudError] = useState("");
   const [savedTab, setSavedTab] = useState("local"); // "local" | "cloud"
+  const [cloudFilter, setCloudFilter] = useState(""); // "" | "principles" | "street"
   const fileInputRef = useRef(null);
 
   const topPrinciples = useMemo(() => {
@@ -146,11 +147,14 @@ export default function HomePage() {
     setSavedItems(await listAnalysisRecords());
   }
 
-  async function fetchCloudItems() {
+  async function fetchCloudItems(filter) {
+    const productType = filter ?? cloudFilter;
     setCloudLoading(true);
     setCloudError("");
     try {
-      const response = await fetch("/api/history?limit=50");
+      const params = new URLSearchParams({ limit: "50" });
+      if (productType) params.set("product_type", productType);
+      const response = await fetch(`/api/history?${params}`);
       const data = await response.json();
       if (!data.ok) throw new Error(data.error || "讀取失敗");
       setCloudItems(data.data || []);
@@ -162,18 +166,29 @@ export default function HomePage() {
   }
 
   function loadCloudItem(item) {
-    setMode(item.mode || "principles");
-    setStyle(item.style || STREET_STYLES[0]);
-    setPreview(item.originalImageUrl || item.imageUrl || "");
+    const bs = item.brandSystem || {};
+    const itemMode = item.product_type || item.controls?.productType || "principles";
+    const itemStyle = item.brand_style || item.controls?.brandStyle || STREET_STYLES[0];
+    setMode(itemMode);
+    setStyle(itemStyle);
+    setPreview(bs.originalImageUrl || item.image_url || "");
     setFile(null);
     setResult(normalizeResult({
-      summary: item.summary,
-      principles: item.principles,
-      markdownReport: item.markdownReport,
-      generatedImage: item.generatedImageUrl || "",
-      streetRedesign: item.streetRedesign || null,
+      summary: bs.summary || "",
+      principles: bs.principles || [],
+      markdownReport: bs.markdownReport || "",
+      generatedImage: bs.generatedImageUrl || "",
+      streetRedesign: bs.streetRedesign || null,
     }));
-    setStatus(`已載入雲端紀錄：${item.title}`);
+    setStatus(`已載入雲端紀錄：${item.name || item.title}`);
+  }
+
+  function formatCloudDate(dateStr) {
+    if (!dateStr) return "";
+    // MySQL 格式 "2026-06-03 05:48:00" → 加 T 讓 JS 可解析
+    const normalized = dateStr.replace(" ", "T");
+    const d = new Date(normalized);
+    return Number.isNaN(d.getTime()) ? dateStr : d.toLocaleString("zh-TW");
   }
 
   async function copyReport() {
@@ -422,22 +437,39 @@ export default function HomePage() {
             </div>
           ) : (
             <div className="saved-list">
+              <div className="segments" style={{ marginBottom: "0.75rem" }}>
+                {[["", "全部"], ["principles", "美的原理"], ["street", "街景改造"]].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    className={cloudFilter === val ? "active" : ""}
+                    onClick={() => {
+                      setCloudFilter(val);
+                      fetchCloudItems(val);
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+
               {cloudLoading ? (
                 <p className="empty-saved">載入雲端紀錄中...</p>
               ) : cloudError ? (
                 <p className="empty-saved">讀取失敗：{cloudError}</p>
               ) : cloudItems.length ? cloudItems.map((item) => (
                 <article className="saved-item" key={item.id}>
-                  {item.imageUrl ? <img src={item.imageUrl} alt="" /> : null}
+                  {item.image_url ? <img src={item.image_url} alt="" /> : null}
                   <div>
-                    <strong>{item.title}</strong>
-                    <span>{item.mode === "street" ? `街景改造 / ${item.style}` : "美的原理"}</span>
-                    <small>{new Date(item.createdAt).toLocaleString("zh-TW")}</small>
+                    <strong>{item.name}</strong>
+                    <span>{item.product_type === "street" ? `街景改造 / ${item.brand_style}` : "美的原理"}</span>
+                    <small>{formatCloudDate(item.created_at)}</small>
                   </div>
                   <button type="button" onClick={() => loadCloudItem(item)}>載入</button>
                 </article>
               )) : <p className="empty-saved">雲端尚無紀錄。</p>}
-              <button type="button" className="secondary" onClick={fetchCloudItems} style={{ marginTop: "1rem" }}>
+
+              <button type="button" className="secondary" onClick={() => fetchCloudItems()} style={{ marginTop: "1rem" }}>
                 重新整理
               </button>
             </div>
