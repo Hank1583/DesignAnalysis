@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
-import { getRequestContext } from "@cloudflare/next-on-pages";
+import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export const runtime = "edge";
 
 export async function POST(request) {
   try {
-    const env = getRequestContext().env;
+    const env = (await getCloudflareContext()).env;
     const uploadUrl = env.BRANDHUE_UPLOAD_IMAGE_URL || "http://www.highlight.url.tw/brandhue/upload_visual_image.php";
     const saveUrl = env.BRANDHUE_SAVE_VISUAL_URL || "http://www.highlight.url.tw/brandhue/save_visual.php";
     const token = env.BRANDHUE_API_TOKEN || "";
