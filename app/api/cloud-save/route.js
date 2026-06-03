@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
 export async function POST(request) {
   try {
-    const uploadUrl = process.env.BRANDHUE_UPLOAD_IMAGE_URL || "http://www.highlight.url.tw/brandhue/upload_visual_image.php";
-    const saveUrl = process.env.BRANDHUE_SAVE_VISUAL_URL || "http://www.highlight.url.tw/brandhue/save_visual.php";
-    const token = process.env.BRANDHUE_API_TOKEN || "";
+    const env = getRequestContext().env;
+    const uploadUrl = env.BRANDHUE_UPLOAD_IMAGE_URL || "http://www.highlight.url.tw/brandhue/upload_visual_image.php";
+    const saveUrl = env.BRANDHUE_SAVE_VISUAL_URL || "http://www.highlight.url.tw/brandhue/save_visual.php";
+    const token = env.BRANDHUE_API_TOKEN || "";
     const payload = await request.json();
 
     const originalImageUrl = payload.preview

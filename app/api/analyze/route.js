@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { getRequestContext } from "@cloudflare/next-on-pages";
 
 export const runtime = "edge";
 
@@ -6,9 +7,10 @@ const PRINCIPLES = ["統一", "反覆", "漸層", "對稱", "平衡", "對比", 
 
 export async function POST(request) {
   try {
-    const apiKey = process.env.OPENAI_API_KEY;
-    const textModel = process.env.OPENAI_MODEL || "gpt-4.1-mini";
-    const imageModel = process.env.OPENAI_IMAGE_MODEL || "gpt-image-1";
+    const env = getRequestContext().env;
+    const apiKey = env.OPENAI_API_KEY;
+    const textModel = env.OPENAI_MODEL || "gpt-4.1-mini";
+    const imageModel = env.OPENAI_IMAGE_MODEL || "gpt-image-1";
 
     if (!apiKey) {
       return NextResponse.json({ ok: false, error: "尚未設定 OPENAI_API_KEY" }, { status: 500 });
