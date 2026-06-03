@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-export const runtime = "nodejs";
+export const runtime = "edge";
 
 const PRINCIPLES = ["統一", "反覆", "漸層", "對稱", "平衡", "對比", "調和", "比例", "律動", "單純"];
 
@@ -191,7 +191,17 @@ ${redesign.suggestions.map((item) => `- ${item}`).join("\n")}`;
 
 async function fileToDataUrl(file) {
   const buffer = await file.arrayBuffer();
-  return `data:${file.type || "image/jpeg"};base64,${Buffer.from(buffer).toString("base64")}`;
+  return `data:${file.type || "image/jpeg"};base64,${arrayBufferToBase64(buffer)}`;
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let index = 0; index < bytes.length; index += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(index, index + chunkSize));
+  }
+  return btoa(binary);
 }
 
 function collectOutputText(payload) {

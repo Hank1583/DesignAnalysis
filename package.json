@@ -1,8 +1,9 @@
 {
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 3000",
-    "build": "next build",
+    "build": "npx @cloudflare/next-on-pages@1",
     "start": "next start -H 127.0.0.1 -p 3000",
+    "pages:build": "npx @cloudflare/next-on-pages@1",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "opennextjs-cloudflare build && opennextjs-cloudflare deploy"
   },
