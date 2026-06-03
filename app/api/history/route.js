@@ -18,8 +18,12 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const page = searchParams.get("page") || "1";
     const limit = searchParams.get("limit") || "20";
+    const productType = searchParams.get("product_type") || "";
 
-    const response = await fetch(`${getUrl}?page=${page}&limit=${limit}`, {
+    const params = new URLSearchParams({ page, limit });
+    if (productType) params.set("product_type", productType);
+
+    const response = await fetch(`${getUrl}?${params}`, {
       headers: token ? { "X-BrandHue-Token": token } : {},
     });
 
