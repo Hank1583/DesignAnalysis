@@ -9,8 +9,8 @@ export async function GET(request) {
     const baseUrl = env.BRANDHUE_SAVE_VISUAL_URL || "";
     const token = env.BRANDHUE_API_TOKEN || "";
 
-    // 從 BRANDHUE_SAVE_VISUAL_URL 推算 get_visuals.php 的位置
-    const getUrl = baseUrl.replace(/save_visual\.php$/i, "get_visuals.php");
+    // 從 BRANDHUE_SAVE_VISUAL_URL 推算 visuals.php 的位置
+    const getUrl = baseUrl.replace(/save_visual\.php$/i, "visuals.php");
     if (!getUrl || !getUrl.startsWith("http")) {
       return NextResponse.json({ ok: false, error: "未設定 BRANDHUE_SAVE_VISUAL_URL" }, { status: 500 });
     }
