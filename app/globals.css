@@ -694,6 +694,36 @@ textarea {
   line-height: 1.65;
 }
 
+.saved-right {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.saved-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.saved-tabs button {
+  padding: 6px 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.saved-tabs button.active {
+  background: var(--accent, #29a5bd);
+  border-color: var(--accent, #29a5bd);
+  color: #fff;
+}
+
 .saved-list {
   display: grid;
   gap: 10px;

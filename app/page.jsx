@@ -403,22 +403,23 @@ export default function HomePage() {
             <p>按「儲存目前結果」會同步到 PHP/MySQL 雲端，同時保留本機快取。</p>
           </div>
 
-          <div className="saved-tabs">
-            <button
-              type="button"
-              className={savedTab === "local" ? "active" : ""}
-              onClick={() => setSavedTab("local")}
-            >
-              本機快取
-            </button>
-            <button
-              type="button"
-              className={savedTab === "cloud" ? "active" : ""}
-              onClick={() => { setSavedTab("cloud"); fetchCloudItems(); }}
-            >
-              雲端紀錄
-            </button>
-          </div>
+          <div className="saved-right">
+            <div className="saved-tabs">
+              <button
+                type="button"
+                className={savedTab === "local" ? "active" : ""}
+                onClick={() => setSavedTab("local")}
+              >
+                本機快取
+              </button>
+              <button
+                type="button"
+                className={savedTab === "cloud" ? "active" : ""}
+                onClick={() => { setSavedTab("cloud"); fetchCloudItems(); }}
+              >
+                雲端紀錄
+              </button>
+            </div>
 
           {savedTab === "local" ? (
             <div className="saved-list">
@@ -474,6 +475,7 @@ export default function HomePage() {
               </button>
             </div>
           )}
+          </div>
         </section>
       </section>
     </main>
