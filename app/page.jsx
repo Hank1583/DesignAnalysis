@@ -28,6 +28,10 @@ export default function HomePage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState(emptyResult);
   const [savedItems, setSavedItems] = useState([]);
+  const [cloudItems, setCloudItems] = useState([]);
+  const [cloudLoading, setCloudLoading] = useState(false);
+  const [cloudError, setCloudError] = useState("");
+  const [savedTab, setSavedTab] = useState("local"); // "local" | "cloud"
   const fileInputRef = useRef(null);
 
   const topPrinciples = useMemo(() => {
@@ -37,6 +41,7 @@ export default function HomePage() {
 
   useEffect(() => {
     refreshSavedItems();
+    fetchCloudItems();
   }, []);
 
   async function handleFile(nextFile) {
@@ -139,6 +144,36 @@ export default function HomePage() {
 
   async function refreshSavedItems() {
     setSavedItems(await listAnalysisRecords());
+  }
+
+  async function fetchCloudItems() {
+    setCloudLoading(true);
+    setCloudError("");
+    try {
+      const response = await fetch("/api/history?limit=50");
+      const data = await response.json();
+      if (!data.ok) throw new Error(data.error || "讀取失敗");
+      setCloudItems(data.data || []);
+    } catch (error) {
+      setCloudError(error.message);
+    } finally {
+      setCloudLoading(false);
+    }
+  }
+
+  function loadCloudItem(item) {
+    setMode(item.mode || "principles");
+    setStyle(item.style || STREET_STYLES[0]);
+    setPreview(item.originalImageUrl || item.imageUrl || "");
+    setFile(null);
+    setResult(normalizeResult({
+      summary: item.summary,
+      principles: item.principles,
+      markdownReport: item.markdownReport,
+      generatedImage: item.generatedImageUrl || "",
+      streetRedesign: item.streetRedesign || null,
+    }));
+    setStatus(`已載入雲端紀錄：${item.title}`);
   }
 
   async function copyReport() {
@@ -349,23 +384,64 @@ export default function HomePage() {
         <section className="saved panel">
           <div>
             <p className="eyebrow">Saved</p>
-            <h2>雲端存檔 / 本機快取</h2>
-            <p>按「儲存目前結果」會先同步到 PHP/MySQL 雲端；同時也保留一份在這台瀏覽器，展示時可直接載入舊結果，不會重新消耗 API 額度。</p>
+            <h2>歷史紀錄</h2>
+            <p>按「儲存目前結果」會同步到 PHP/MySQL 雲端，同時保留本機快取。</p>
           </div>
-          <div className="saved-list">
-            {savedItems.length ? savedItems.map((item) => (
-              <article className="saved-item" key={item.id}>
-                {item.preview ? <img src={item.preview} alt="" /> : null}
-                <div>
-                  <strong>{item.title}</strong>
-                  <span>{item.mode === "street" ? `街景改造 / ${item.style}` : "美的原理"}</span>
-                  <small>{new Date(item.createdAt).toLocaleString("zh-TW")}</small>
-                </div>
-                <button type="button" onClick={() => loadSavedItem(item)}>載入</button>
-                <button type="button" className="danger" onClick={() => deleteSavedItem(item.id)}>刪除</button>
-              </article>
-            )) : <p className="empty-saved">尚無存檔。分析完成後請按「儲存目前結果」。</p>}
+
+          <div className="saved-tabs">
+            <button
+              type="button"
+              className={savedTab === "local" ? "active" : ""}
+              onClick={() => setSavedTab("local")}
+            >
+              本機快取
+            </button>
+            <button
+              type="button"
+              className={savedTab === "cloud" ? "active" : ""}
+              onClick={() => { setSavedTab("cloud"); fetchCloudItems(); }}
+            >
+              雲端紀錄
+            </button>
           </div>
+
+          {savedTab === "local" ? (
+            <div className="saved-list">
+              {savedItems.length ? savedItems.map((item) => (
+                <article className="saved-item" key={item.id}>
+                  {item.preview ? <img src={item.preview} alt="" /> : null}
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.mode === "street" ? `街景改造 / ${item.style}` : "美的原理"}</span>
+                    <small>{new Date(item.createdAt).toLocaleString("zh-TW")}</small>
+                  </div>
+                  <button type="button" onClick={() => loadSavedItem(item)}>載入</button>
+                  <button type="button" className="danger" onClick={() => deleteSavedItem(item.id)}>刪除</button>
+                </article>
+              )) : <p className="empty-saved">尚無本機存檔。分析完成後請按「儲存目前結果」。</p>}
+            </div>
+          ) : (
+            <div className="saved-list">
+              {cloudLoading ? (
+                <p className="empty-saved">載入雲端紀錄中...</p>
+              ) : cloudError ? (
+                <p className="empty-saved">讀取失敗：{cloudError}</p>
+              ) : cloudItems.length ? cloudItems.map((item) => (
+                <article className="saved-item" key={item.id}>
+                  {item.imageUrl ? <img src={item.imageUrl} alt="" /> : null}
+                  <div>
+                    <strong>{item.title}</strong>
+                    <span>{item.mode === "street" ? `街景改造 / ${item.style}` : "美的原理"}</span>
+                    <small>{new Date(item.createdAt).toLocaleString("zh-TW")}</small>
+                  </div>
+                  <button type="button" onClick={() => loadCloudItem(item)}>載入</button>
+                </article>
+              )) : <p className="empty-saved">雲端尚無紀錄。</p>}
+              <button type="button" className="secondary" onClick={fetchCloudItems} style={{ marginTop: "1rem" }}>
+                重新整理
+              </button>
+            </div>
+          )}
         </section>
       </section>
     </main>
